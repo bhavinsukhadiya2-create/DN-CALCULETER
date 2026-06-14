@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>DN Calculator Premium</title>
+    
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkROIENhbGN1bGF0b3IgUHJlbWl1bSIsCiAgInNob3J0X25hbWUiOiAiRE4gQ2FsYyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYyMDI3IiwKICAidGhlbWVfY29sb3IiOiAiIzBmMjAyNyIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzI2MDMvMjYwMzQ5NS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNraW5nIgogICAgfQogIF0KfQ==">
+
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .container {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: 0px 15px 40px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 60px 1.1fr 0.8fr 0.8fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        input {
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            text-align: center;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .rateBox {
+            background: #ffe082;
+            font-weight: bold;
+        }
+        .result {
+            background: #c8e6c9;
+            font-weight: bold;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: linear-gradient(90deg,#00c6ff,#0072ff);
+            color: white;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .totalBox {
+            margin-top: 15px;
+            font-size: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #fff59d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="letter-spacing:1px; text-transform:uppercase;">Yogiraj Creation</h2>
+        <div style="margin-bottom:10px; display:flex; gap:6px; align-items:center;">
+            <label style="font-size:14px;">DN No:</label>
+            <input id="dnNumber" placeholder="Enter DN" style="flex:1; padding:6px; border-radius:6px; border:none;">
+        </div>
+        <h3 style="text-align:center; margin-top:-10px; margin-bottom:20px; font-weight:400;">DN Stitch Calculator</h3>
+                
+        <div class="row">
+            <div></div>
+            <input placeholder="Stich" style="visibility: hidden;">
+            <input placeholder="Hade" style="visibility: hidden;">
+            <input class="rateBox" id="rate" placeholder="Rate">
+            <input placeholder="Total" style="visibility: hidden;">
+        </div>
+                
+        <div id="rows"></div>
+                
+        <button onclick="generatePDF()" style="margin-top:15px; background:linear-gradient(90deg,#ff9966,#ff5e62);">Generate 4×6 PDF</button>
+        <div class="totalBox">Grand Total: ₹ <span id="grandTotal">0.00</span></div>
+    </div>
+
+<script>
+const names = ["Top","Slevs","DUP","Bottom","Less","Top side"];
+const rowsContainer = document.getElementById("rows");
+
+// Rows generation
+names.forEach(name=>{
+    const row = document.createElement("div");
+    row.className="row";
+    row.innerHTML = `
+        <div style="font-size:13px; font-weight:500;">${name}</div>
+        <input class="stich" type="number" placeholder="Stich">
+        <input class="hade" type="number" placeholder="Hade">
+        <input class="rateBox rateClone" type="number" step="0.01">
+        <input class="result" readonly placeholder="">
+    `;
+    rowsContainer.appendChild(row);
+});
+
+const masterRate = document.getElementById("rate");
+
+// Sync master rate
+masterRate.addEventListener("input",()=>{
+    localStorage.setItem("defaultRate", masterRate.value);
+    syncRates(masterRate.value);
+    calculate();
+});
+
+function syncRates(value){
+    document.querySelectorAll(".rateClone").forEach(r=>{
+        r.value=value;
+    });
+}
+
+window.onload=function(){
+    let savedRate=localStorage.getItem("defaultRate") || "0.50";
+    masterRate.value=savedRate;
+    syncRates(savedRate);
+    calculate();
+}
+
+// Main Calculate Function
+function calculate(){
+    let grandTotal = 0;
+    document.querySelectorAll("#rows .row").forEach((row)=>{
+        let stichRaw = row.children[1].value;
+        let hadeRaw = row.children[2].value;
+        let rateRaw = row.children[3].value;
+        
+        if (stichRaw === "" || hadeRaw === "" || stichRaw === "0" || hadeRaw === "0") {
+            row.children[4].value = ""; 
+        } else {
+            let stich = parseFloat(stichRaw) || 0;
+            let hade = parseFloat(hadeRaw) || 0;
+            let rate = parseFloat(rateRaw) || 0;
+            let total = (stich * hade * rate) / 1000;
+            row.children[4].value = total.toFixed(2);
+            grandTotal += total;
+        }
+    });
+    document.getElementById("grandTotal").innerText = grandTotal.toFixed(2);
+}
+
+// Live typing detection
+rowsContainer.addEventListener("input", (e) => {
+    if(e.target.classList.contains("stich") || e.target.classList.contains("hade") || e.target.classList.contains("rateClone")) {
+        calculate();
+    }
+});
+
+// PDF Generation Function
+async function generatePDF(){
+    calculate(); 
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:"in", format:[4,6]});
+    let dn = document.getElementById("dnNumber").value || "";
+    let grand = document.getElementById("grandTotal").innerText || "0.00";
+    let y = 0.35;
+    
+    // Header
+    doc.setFontSize(14);
+    doc.text("YOGIRAJ CREATION",2,y,{align:"center"});
+    y += 0.25;
+    
+    // DN Number
+    doc.setFontSize(10);
+    doc.text("DN No: " + dn,0.2,y);
+    y += 0.25;
+    
+    // Table Header
+    doc.setFontSize(9);
+    doc.text("Part",0.2,y);
+    doc.text("Stich",1.1,y);
+    doc.text("Hade",1.9,y);
+    doc.text("Rate",2.6,y);
+    doc.text("Total",3.3,y);
+    y += 0.12;
+    
+    doc.setLineWidth(0.01); 
+    doc.line(0.2,y,3.8,y);
+    y += 0.18;
+    
+    // Table Rows
+    const rows = document.querySelectorAll("#rows .row");
+    rows.forEach((row,index)=>{
+        let part = names[index];
+        let stich = row.children[1].value || "";
+        let hade = row.children[2].value || "";
+        let rate = row.children[3].value || "";
+        let total = row.children[4].value || "";
+        
+        doc.text(part,0.2,y);
+        doc.text(String(stich),1.1,y);
+        doc.text(String(hade),1.9,y);
+        doc.text(String(rate),2.6,y);
+        doc.text(String(total),3.3,y);
+        y += 0.22;
+    });
+    
+    y += 0.05;
+    doc.setLineWidth(0.01); 
+    doc.line(0.2,y,3.8,y);
+    y += 0.25;
+    
+    // Grand Total
+    doc.setFontSize(11);
+    doc.text("Grand Total: ₹ " + grand,0.2,y);
+    
+    doc.save("DN_" + (dn || "Slip") + ".pdf");
+}
+
+// Service Worker Registration for Offline Use
+if ('serviceWorker' in navigator) {
+    const swCode = `
+        const CACHE_NAME = 'dn-calc-v1';
+        self.addEventListener('install', e => {
+            e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'])));
+        });
+        self.addEventListener('fetch', e => {
+            e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+        });
+    `;
+    const blob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl);
+}
+</script>
+</body>
+</html>
