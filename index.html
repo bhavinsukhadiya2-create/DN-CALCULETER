@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>DN Calculator Premium</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkROIENhbGN1bGF0b3IgUHJlbWl1bSIsCiAgInNob3J0X25hbWUiOiAiRE4gQ2FsYyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYyMDI3IiwKICAidGhlbWVfY29sb3IiOiAiIzBmMjAyNyIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzI2MDMvMjYwMzQ5NS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNraW5nIgogICAgfQogIF0KfQ==">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkROIENhbGN1bGF0b3IgUHJlbWl1bSIsCiAgInNob3J0X25hbWUiOiAiRE4gQ2FsYyIsCiAgInN0YXJ0X3VybCI6ICIuL2luZGV4Lmh0bWwiLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjIwMjciLAogICJ0aGVtZV9jb2xvciI6ICIjMGYyMDI3IiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaWNvbi01MTIucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciLAogICAgICAicHVycG9zZSI6ICJhbnkgbWFza2FibGUiCiAgICB9CiAgXQp9">
 
     <style>
         body {
@@ -113,7 +113,6 @@
 const names = ["Top","Slevs","DUP","Bottom","Less","Top side"];
 const rowsContainer = document.getElementById("rows");
 
-// Rows generation
 names.forEach(name=>{
     const row = document.createElement("div");
     row.className="row";
@@ -129,7 +128,6 @@ names.forEach(name=>{
 
 const masterRate = document.getElementById("rate");
 
-// Sync master rate
 masterRate.addEventListener("input",()=>{
     localStorage.setItem("defaultRate", masterRate.value);
     syncRates(masterRate.value);
@@ -149,7 +147,6 @@ window.onload=function(){
     calculate();
 }
 
-// Main Calculate Function
 function calculate(){
     let grandTotal = 0;
     document.querySelectorAll("#rows .row").forEach((row)=>{
@@ -171,14 +168,12 @@ function calculate(){
     document.getElementById("grandTotal").innerText = grandTotal.toFixed(2);
 }
 
-// Live typing detection
 rowsContainer.addEventListener("input", (e) => {
     if(e.target.classList.contains("stich") || e.target.classList.contains("hade") || e.target.classList.contains("rateClone")) {
         calculate();
     }
 });
 
-// PDF Generation Function
 async function generatePDF(){
     calculate(); 
     const { jsPDF } = window.jspdf;
@@ -187,17 +182,14 @@ async function generatePDF(){
     let grand = document.getElementById("grandTotal").innerText || "0.00";
     let y = 0.35;
     
-    // Header
     doc.setFontSize(14);
     doc.text("YOGIRAJ CREATION",2,y,{align:"center"});
     y += 0.25;
     
-    // DN Number
     doc.setFontSize(10);
     doc.text("DN No: " + dn,0.2,y);
     y += 0.25;
     
-    // Table Header
     doc.setFontSize(9);
     doc.text("Part",0.2,y);
     doc.text("Stich",1.1,y);
@@ -210,7 +202,6 @@ async function generatePDF(){
     doc.line(0.2,y,3.8,y);
     y += 0.18;
     
-    // Table Rows
     const rows = document.querySelectorAll("#rows .row");
     rows.forEach((row,index)=>{
         let part = names[index];
@@ -232,19 +223,22 @@ async function generatePDF(){
     doc.line(0.2,y,3.8,y);
     y += 0.25;
     
-    // Grand Total
     doc.setFontSize(11);
     doc.text("Grand Total: ₹ " + grand,0.2,y);
     
     doc.save("DN_" + (dn || "Slip") + ".pdf");
 }
 
-// Service Worker Registration for Offline Use
+// Fixed Cache Settings for your specific repo
 if ('serviceWorker' in navigator) {
     const swCode = `
-        const CACHE_NAME = 'dn-calc-v1';
+        const CACHE_NAME = 'dn-calc-v9';
         self.addEventListener('install', e => {
-            e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'])));
+            e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll([
+                './index.html', 
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                'icon-512.png'
+            ])));
         });
         self.addEventListener('fetch', e => {
             e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
