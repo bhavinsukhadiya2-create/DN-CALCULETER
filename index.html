@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>DN Calculator Premium</title>
     
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkROIENhbGN1bGF0b3IgUHJlbWl1bSIsCiAgInNob3J0X25hbWUiOiAiRE4gQ2FsYyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYyMDI3IiwKICAidGhlbWVfY29sb3IiOiAiIzBmMjAyNyIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vaW1ndXMuY29tL2IvZzR0bzhjTS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNraW5nIgogICAgfQogIF0KfQ==">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkROIENhbGN1bGF0b3IgUHJlbWl1bSIsCiAgInNob3J0X25hbWUiOiAiRE4gQ2FsYyIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYyMDI3IiwKICAidGhlbWVfY29sb3IiOiAiIzBmMjAyNyIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzI2MDMvMjYwMzQ5NS5wbmciLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNraW5nIgogICAgfQogIF0KfQ==">
 
     <style>
         body {
@@ -239,16 +239,12 @@ async function generatePDF(){
     doc.save("DN_" + (dn || "Slip") + ".pdf");
 }
 
-// Service Worker Settings
+// Service Worker Registration for Offline Use
 if ('serviceWorker' in navigator) {
     const swCode = `
-        const CACHE_NAME = 'dn-calc-v4';
+        const CACHE_NAME = 'dn-calc-v1';
         self.addEventListener('install', e => {
-            e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll([
-                './', 
-                'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-                'https://imgus.com/b/g4to8cM.png'
-            ])));
+            e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'])));
         });
         self.addEventListener('fetch', e => {
             e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
